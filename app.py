@@ -103,10 +103,13 @@ def proses_chat_user(message):
         pesan = f"✅ *Berhasil Dicatat!*\nJenis: {data['jenis'].capitalize()}\nKategori: {data['kategori']}\nNominal: Rp {data['nominal']:,}"
         bot.send_message(chat_id, pesan, parse_mode="Markdown")
     else:
-        bot.reply_to(message, "❌ Gagal mengenali format uang.")
+        bot.reply_to(message, "❌ Gagal mengenali format uang atau kuota AI habis.")
 
 def jalankan_bot():
-    bot.infinity_polling()
+    try:
+        bot.infinity_polling(timeout=10, long_polling_timeout=5)
+    except Exception as e:
+        print(f"Polling error: {e}")
 
 # ================= FLASK ROUTES =================
 @app.route('/')
@@ -125,7 +128,6 @@ def index():
         pengeluaran = df[df['Jenis'].str.lower() == 'pengeluaran']['Nominal'].sum()
         saldo = pemasukan - pengeluaran
 
-        # Menyertakan index asli agar tombol hapus di index/histori akurat
         df['index_asli'] = df.index
         df_sorted = df.sort_values(by='Tanggal', ascending=False)
         transaksi_terakhir = df_sorted.head(5).to_dict('records')
@@ -157,6 +159,24 @@ def tambah_web():
             simpan_baris_csv(chat_id, waktu, data['jenis'], data['kategori'], data['nominal'], data['keterangan'])
     return redirect(url_for('index', user=chat_id))
 
+# Rute Tambah Manual (Cadangan saat token AI habis)
+@app.route('/tambah_manual', methods=['POST'])
+def tambah_manual():
+    chat_id = request.args.get('user', 'default')
+    jenis = request.form.get('jenis')
+    kategori = request.form.get('kategori', 'Lainnya')
+    try:
+        nominal = float(request.form.get('nominal', 0))
+    except ValueError:
+        nominal = 0
+    keterangan = request.form.get('keterangan', '-')
+    
+    if nominal > 0:
+        waktu = get_waktu_wib()
+        simpan_baris_csv(chat_id, waktu, jenis, kategori, nominal, keterangan)
+        
+    return redirect(url_for('index', user=chat_id))
+
 @app.route('/set_target', methods=['POST'])
 def update_target():
     chat_id = request.args.get('user', 'default')
@@ -172,8 +192,8 @@ def hapus_transaksi(index_id):
         if 0 <= index_id < len(df):
             df = df.drop(index_id).reset_index(drop=True)
             df.to_csv(csv_file, index=False)
-    # Redirect kembali ke halaman asal (jika dari histori atau index)
-    asal = request.args.get('from', 'histori')
+            
+    asal = request.args.get('from', '')
     if asal == 'index':
         return redirect(url_for('index', user=chat_id))
     return redirect(url_for('histori', user=chat_id))
@@ -200,7 +220,7 @@ def histori():
         list_histori = []
     return render_template('histori.html', transaksi=list_histori, bulan=bulan_filter, user=chat_id)
 
-# Jalankan bot di background thread secara global
+# Jalankan bot di background thread secara aman
 t = threading.Thread(target=jalankan_bot)
 t.daemon = True
 t.start()
