@@ -1,1 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #F5EFEB; color: #4A3B32; font-family: sans-serif; }
+        .navbar-custom { background-color: #5C4033; }
+        .card-custom { background-color: #FAF6F0; border: 1px solid #E3D9CD; border-radius: 12px; }
+        .card-main { background-color: #6F4E37; color: white; border-radius: 12px; }
+        .btn-brown { background-color: #5C4033; color: white; }
+        .btn-brown:hover { background-color: #4A3B32; color: white; }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand navbar-custom shadow-sm mb-4">
+        <div class="container" style="max-width: 650px;">
+            <a class="navbar-brand text-white fw-bold" href="/">☕ Finance</a>
+            <div class="navbar-nav d-flex flex-row gap-3">
+                <a class="nav-link text-white active" href="/">Dashboard</a>
+                <a class="nav-link text-white-50" href="/histori">Histori</a>
+                <a class="nav-link text-white-50" href="/export">📥 Export CSV</a>
+            </div>
+        </div>
+    </nav>
 
+    <div class="container pb-5" style="max-width: 650px;">
+
+        <!-- Peringatan Budget Tipis -->
+        {% if warning %}
+        <div class="alert alert-warning border-0 shadow-sm rounded-4 mb-3" style="background-color: #EED7C5; color: #5C4033;" role="alert">
+            <strong>⚠️ Perhatian!</strong> Pengeluaran bulan ini sudah mencapai lebih dari 80% total pemasukan. Yuk, lebih hemat!
+        </div>
+        {% endif %}
+
+        <!-- Saldo Utama -->
+        <div class="card card-main shadow-sm mb-3">
+            <div class="card-body text-center py-4">
+                <p class="mb-1 text-light opacity-75">Sisa Saldo & Tabungan</p>
+                <h1 class="fw-bold">Rp {{ "{:,.0f}".format(saldo) }}</h1>
+                <div class="d-flex justify-content-around mt-3 border-top border-light pt-2">
+                    <div><small>Masuk: Rp {{ "{:,.0f}".format(total_in) }}</small></div>
+                    <div><small>Keluar: Rp {{ "{:,.0f}".format(total_out) }}</small></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Target Tabungan & Progress Bar -->
+        <div class="card card-custom shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0 text-dark">🎯 Target Tabungan</h6>
+                    <button class="btn btn-sm btn-outline-secondary py-0 px-2" data-bs-toggle="collapse" data-bs-target="#formTarget">Atur Target</button>
+                </div>
+                <div class="mb-1 text-muted small">Target: Rp {{ "{:,.0f}".format(target) }} ({{ progress }}% tercapai)</div>
+                <div class="progress" style="height: 10px; background-color: #E3D9CD;">
+                    <div class="progress-bar" role="progressbar" style="width: {{ progress }}%; background-color: #8C6D53;" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+
+                <div class="collapse mt-3" id="formTarget">
+                    <form action="/set_target" method="POST" class="input-group input-group-sm">
+                        <input type="number" name="target_nominal" class="form-control" placeholder="Nominal target baru" required>
+                        <button class="btn btn-brown" type="submit">Simpan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ringkasan Kategori Pengeluaran -->
+        {% if kategori_summary %}
+        <div class="card card-custom shadow-sm mb-3">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3 text-dark">📊 Pengeluaran per Kategori</h6>
+                <div class="d-flex flex-column gap-2">
+                    {% for k in kategori_summary %}
+                    <div class="d-flex justify-content-between align-items-center small">
+                        <span>{{ k.Kategori }}</span>
+                        <span class="fw-bold text-danger">Rp {{ "{:,.0f}".format(k.Nominal) }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Form Tambah Transaksi dengan AI -->
+        <div class="card card-custom shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3 fw-bold fs-6">✨ Catat Cepat dengan AI</h5>
+                <form action="/tambah_web" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Ketik pengeluaran/pemasukan bebas:</label>
+                        <input type="text" name="teks_ai" class="form-control form-control-sm bg-light" placeholder="Contoh: Beli bensin 50rb atau Nabung 500rb" required>
+                        <div class="form-text" style="font-size: 11px;">AI akan otomatis mendeteksi jenis, kategori, dan nominalnya.</div>
+                    </div>
+                    <button type="submit" class="btn btn-brown btn-sm w-100 fw-bold">Simpan dengan AI</button>
+                </form>
+            </div>
+        </div>
+        <!-- Transaksi Terakhir -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold mb-0">Transaksi Terakhir</h6>
+            <a href="/histori" class="text-decoration-none small text-muted">Lihat Semua &rarr;</a>
+        </div>
+
+        <div class="list-group shadow-sm rounded-4 overflow-hidden border">
+            {% for t in transaksi %}
+            <div class="list-group-item card-custom d-flex justify-content-between align-items-center py-3 border-bottom">
+                <div>
+                    <h6 class="mb-0 fw-bold">{{ t.Kategori }}</h6>
+                    <small class="text-muted" style="font-size: 11px;">{{ t.Keterangan }} • {{ t.Tanggal }}</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge {{ 'bg-success' if t.Jenis|lower == 'pemasukan' else 'bg-danger' }}">
+                        {{ '+' if t.Jenis|lower == 'pemasukan' else '-' }}Rp{{ "{:,.0f}".format(t.Nominal) }}
+                    </span>
+                    <a href="/hapus/{{ t.index_asli }}" class="btn btn-outline-danger btn-sm py-0 px-1" title="Hapus" onclick="return confirm('Hapus transaksi ini?')">🗑️</a>
+                </div>
+            </div>
+            {% else %}
+            <div class="list-group-item card-custom text-center text-muted py-3">Belum ada transaksi.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
