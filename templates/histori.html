@@ -14,14 +14,25 @@
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand navbar-custom shadow-sm mb-4">
+    <!-- Navbar Responsive -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom shadow-sm mb-4">
         <div class="container" style="max-width: 650px;">
-            <a class="navbar-brand text-white fw-bold" href="/">☕ Finance</a>
-            <div class="navbar-nav d-flex flex-row gap-3">
-                <a class="nav-link text-white-50" href="/">Dashboard</a>
-                <a class="nav-link text-white active" href="/histori">Histori</a>
-                <a class="nav-link text-white-50" href="/export">📥 Export CSV</a>
+            <a class="navbar-brand fw-bold" href="/?user={{ user }}">☕ Finance</a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto gap-2 py-2">
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50" href="/?user={{ user }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white active fw-semibold" href="/histori?user={{ user }}">Histori</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50" href="/export?user={{ user }}">📥 Export CSV</a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
@@ -33,6 +44,8 @@
         <div class="card card-custom shadow-sm mb-3">
             <div class="card-body">
                 <form action="/histori" method="GET" class="row g-2 align-items-center">
+                    <!-- Menyertakan user agar parameter chat_id tidak hilang saat filter -->
+                    <input type="hidden" name="user" value="{{ user }}">
                     <div class="col-8">
                         <input type="month" name="bulan" class="form-control form-control-sm bg-light" value="{{ bulan }}" required>
                     </div>
@@ -73,7 +86,7 @@
                                 {{ '+' if t.Jenis|lower == 'pemasukan' else '-' }}Rp{{ "{:,.0f}".format(t.Nominal) }}
                             </td>
                             <td class="text-center">
-                                <a href="/hapus/{{ t.index_asli }}" class="btn btn-outline-danger btn-sm py-0 px-1" title="Hapus" onclick="return confirm('Hapus transaksi ini?')">🗑️</a>
+                                <a href="{{ url_for('hapus_transaksi', index_id=t.index_asli, user=user, from='histori') }}" class="btn btn-outline-danger btn-sm py-0 px-1" title="Hapus" onclick="return confirm('Hapus transaksi ini?')">🗑️</a>
                             </td>
                         </tr>
                         {% else %}
