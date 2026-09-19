@@ -87,7 +87,7 @@ def send_id(message):
 def send_web_link(message):
     chat_id = message.chat.id
     # Mengambil domain aplikasi secara otomatis atau menggunakan domain railway kamu
-    web_url = f"https://myfinance.com/?user={chat_id}"
+    web_url = f"https://finance-production-0fdb.up.railway.app/?user={chat_id}"
     bot.reply_to(message, f"🔗 Link dashboard web keuangan kamu:\n{web_url}")
 
 @bot.message_handler(func=lambda message: True)
