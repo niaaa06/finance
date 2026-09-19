@@ -97,7 +97,7 @@ def index():
     if df.empty:
         saldo, pemasukan, pengeluaran, progress = 0, 0, 0, 0
         transaksi_terakhir = []
-        kategori_summary = []
+       kat_sum = []
         warning = False
     else:
         pemasukan = df[df['Jenis'].str.lower() == 'pemasukan']['Nominal'].sum()
