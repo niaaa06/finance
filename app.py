@@ -166,8 +166,9 @@ def histori():
         list_histori = []
     return render_template('histori.html', transaksi=list_histori, bulan=bulan_filter)
 
+import os
+
 if __name__ == '__main__':
-    t = threading.Thread(target=jalankan_bot)
-    t.daemon = True
-    t.start()
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    # Railway menggunakan port dinamis dari environment variable 'PORT'
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
