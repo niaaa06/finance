@@ -1,0 +1,6 @@
+Flask
+pandas
+pyTelegramBotApi
+google-genai
+python-dotenv
+gunicorn
