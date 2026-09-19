@@ -3,7 +3,7 @@ import csv
 import json
 import re
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, send_file
 import pandas as pd
 import telebot
@@ -19,6 +19,10 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 app = Flask(__name__)
 
 TARGET_FILE = 'target.json'
+
+# Fungsi untuk mendapatkan waktu lokal WIB (UTC+7)
+def get_waktu_wib():
+    return (datetime.utcnow() + timedelta(hours=7)).strftime("%Y-%m-%d %H:%M:%S")
 
 # Fungsi untuk mendapatkan nama file CSV khusus berdasarkan chat_id Telegram
 def get_csv_file(chat_id):
@@ -86,7 +90,6 @@ def send_id(message):
 @bot.message_handler(commands=['web'])
 def send_web_link(message):
     chat_id = message.chat.id
-    # Mengambil domain aplikasi secara otomatis atau menggunakan domain railway kamu
     web_url = f"https://finance-production-0fdb.up.railway.app/?user={chat_id}"
     bot.reply_to(message, f"🔗 Link dashboard web keuangan kamu:\n{web_url}")
 
@@ -95,7 +98,7 @@ def proses_chat_user(message):
     chat_id = message.chat.id
     data = ekstrak_data_keuangan(message.text)
     if data:
-        waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        waktu = get_waktu_wib()
         simpan_baris_csv(chat_id, waktu, data['jenis'], data['kategori'], data['nominal'], data['keterangan'])
         pesan = f"✅ *Berhasil Dicatat!*\nJenis: {data['jenis'].capitalize()}\nKategori: {data['kategori']}\nNominal: Rp {data['nominal']:,}"
         bot.send_message(chat_id, pesan, parse_mode="Markdown")
@@ -122,7 +125,9 @@ def index():
         pengeluaran = df[df['Jenis'].str.lower() == 'pengeluaran']['Nominal'].sum()
         saldo = pemasukan - pengeluaran
 
-        df_sorted = df.reset_index().sort_values(by='Tanggal', ascending=False)
+        # Menyertakan index asli agar tombol hapus di index/histori akurat
+        df['index_asli'] = df.index
+        df_sorted = df.sort_values(by='Tanggal', ascending=False)
         transaksi_terakhir = df_sorted.head(5).to_dict('records')
 
         progress = int((saldo / target) * 100) if target > 0 else 0
@@ -148,7 +153,7 @@ def tambah_web():
     if teks_input:
         data = ekstrak_data_keuangan(teks_input)
         if data:
-            waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            waktu = get_waktu_wib()
             simpan_baris_csv(chat_id, waktu, data['jenis'], data['kategori'], data['nominal'], data['keterangan'])
     return redirect(url_for('index', user=chat_id))
 
@@ -167,6 +172,10 @@ def hapus_transaksi(index_id):
         if 0 <= index_id < len(df):
             df = df.drop(index_id).reset_index(drop=True)
             df.to_csv(csv_file, index=False)
+    # Redirect kembali ke halaman asal (jika dari histori atau index)
+    asal = request.args.get('from', 'histori')
+    if asal == 'index':
+        return redirect(url_for('index', user=chat_id))
     return redirect(url_for('histori', user=chat_id))
 
 @app.route('/export')
@@ -180,7 +189,7 @@ def export_csv():
 @app.route('/histori')
 def histori():
     chat_id = request.args.get('user', 'default')
-    bulan_filter = request.args.get('bulan', datetime.now().strftime("%Y-%m"))
+    bulan_filter = request.args.get('bulan', (datetime.utcnow() + timedelta(hours=7)).strftime("%Y-%m"))
     df = baca_csv(chat_id)
     if not df.empty:
         df['index_asli'] = df.index
