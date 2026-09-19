@@ -166,9 +166,12 @@ def histori():
         list_histori = []
     return render_template('histori.html', transaksi=list_histori, bulan=bulan_filter)
 
-import os
+
+# ================= JALANKAN BOT DI BACKGROUND THREAD (GLOBAL) =================
+# Supaya ikut terpanggil saat dimuat oleh Gunicorn/Railway
+t = threading.Thread(target=jalankan_bot)
+t.daemon = True
+t.start()
 
 if __name__ == '__main__':
-    # Railway menggunakan port dinamis dari environment variable 'PORT'
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=5000, debug=False)
