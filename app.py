@@ -66,7 +66,6 @@ def ekstrak_data_keuangan(teks):
     Teks pengguna: "{teks}"
     """
     try:
-        # Menggunakan model Gemini yang valid
         response = client.models.generate_content(model='gemini-3.6-flash', contents=prompt)
         match = re.search(r'\{.*\}', response.text, re.DOTALL)
         if match:
@@ -75,10 +74,21 @@ def ekstrak_data_keuangan(teks):
     except Exception as e:
         print("Error parsing AI:", e)
         return None
-        
+
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "Halo! Bot pencatat keuangan pribadi aktif. Kirim chat seperti 'Beli bakso 15rb' atau 'Nabung 100rb'. Catatanmu aman dan terpisah dari pengguna lain!")
+    bot.reply_to(message, "Halo! Bot pencatat keuangan pribadi aktif. \n\nPerintah:\n- Kirim teks pengeluaran/pemasukan (cth: 'Beli makan 25rb')\n- /id (Melihat Chat ID kamu)\n- /web (Mendapatkan link dashboard web kamu)")
+
+@bot.message_handler(commands=['id'])
+def send_id(message):
+    bot.reply_to(message, f"Chat ID kamu adalah: `{message.chat.id}`", parse_mode="Markdown")
+
+@bot.message_handler(commands=['web'])
+def send_web_link(message):
+    chat_id = message.chat.id
+    # Mengambil domain aplikasi secara otomatis atau menggunakan domain railway kamu
+    web_url = f"https://myfinance.com/?user={chat_id}"
+    bot.reply_to(message, f"🔗 Link dashboard web keuangan kamu:\n{web_url}")
 
 @bot.message_handler(func=lambda message: True)
 def proses_chat_user(message):
@@ -98,10 +108,7 @@ def jalankan_bot():
 # ================= FLASK ROUTES =================
 @app.route('/')
 def index():
-    # Untuk web, kita set default pakai chat_id utama atau global (bisa disesuaikan nanti)
     chat_id = request.args.get('user', 'default')
-    csv_file = get_csv_file(chat_id)
-    
     df = baca_csv(chat_id)
     target = baca_target()
 
@@ -132,7 +139,7 @@ def index():
 
     return render_template('index.html', saldo=saldo, total_in=pemasukan, total_out=pengeluaran,
                            transaksi=transaksi_terakhir, target=target, progress=progress,
-                           kategori_summary=kat_sum, warning=warning)
+                           kategori_summary=kat_sum, warning=warning, user=chat_id)
 
 @app.route('/tambah_web', methods=['POST'])
 def tambah_web():
