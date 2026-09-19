@@ -67,7 +67,7 @@ def ekstrak_data_keuangan(teks):
     """
     try:
         # Menggunakan model Gemini yang valid
-        response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+        response = client.models.generate_content(model='gemini-3.6-flash', contents=prompt)
         match = re.search(r'\{.*\}', response.text, re.DOTALL)
         if match:
             return json.loads(match.group(0))
