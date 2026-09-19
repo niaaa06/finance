@@ -66,7 +66,8 @@ def ekstrak_data_keuangan(teks):
     Teks pengguna: "{teks}"
     """
     try:
-        response = client.models.generate_content(model='gemini-3.6-flash', contents=prompt)
+        # Menggunakan model Gemini yang valid
+        response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
         match = re.search(r'\{.*\}', response.text, re.DOTALL)
         if match:
             return json.loads(match.group(0))
@@ -74,7 +75,7 @@ def ekstrak_data_keuangan(teks):
     except Exception as e:
         print("Error parsing AI:", e)
         return None
-
+        
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     bot.reply_to(message, "Halo! Bot pencatat keuangan pribadi aktif. Kirim chat seperti 'Beli bakso 15rb' atau 'Nabung 100rb'. Catatanmu aman dan terpisah dari pengguna lain!")
