@@ -18,20 +18,25 @@ bot = telebot.TeleBot(TELEGRAM_TOKEN)
 client = genai.Client(api_key=GEMINI_API_KEY)
 app = Flask(__name__)
 
-CSV_FILE = 'data_keuangan.csv'
 TARGET_FILE = 'target.json'
 
-def baca_csv():
-    if not os.path.exists(CSV_FILE):
+# Fungsi untuk mendapatkan nama file CSV khusus berdasarkan chat_id Telegram
+def get_csv_file(chat_id):
+    return f'data_keuangan_{chat_id}.csv'
+
+def baca_csv(chat_id):
+    csv_file = get_csv_file(chat_id)
+    if not os.path.exists(csv_file):
         return pd.DataFrame(columns=['Tanggal', 'Jenis', 'Kategori', 'Nominal', 'Keterangan'])
-    df = pd.read_csv(CSV_FILE)
+    df = pd.read_csv(csv_file)
     df.columns = df.columns.str.strip().str.title()
     df['Nominal'] = pd.to_numeric(df['Nominal'], errors='coerce').fillna(0)
     return df
 
-def simpan_baris_csv(tanggal, jenis, kategori, nominal, keterangan):
-    file_exist = os.path.exists(CSV_FILE)
-    with open(CSV_FILE, 'a', newline='', encoding='utf-8') as f:
+def simpan_baris_csv(chat_id, tanggal, jenis, kategori, nominal, keterangan):
+    csv_file = get_csv_file(chat_id)
+    file_exist = os.path.exists(csv_file)
+    with open(csv_file, 'a', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         if not file_exist:
             writer.writerow(['Tanggal', 'Jenis', 'Kategori', 'Nominal', 'Keterangan'])
@@ -72,16 +77,17 @@ def ekstrak_data_keuangan(teks):
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "Halo! Bot pencatat keuangan Finance aktif. Kirim chat seperti 'Beli bakso 15rb' atau 'Nabung 100rb'.")
+    bot.reply_to(message, "Halo! Bot pencatat keuangan pribadi aktif. Kirim chat seperti 'Beli bakso 15rb' atau 'Nabung 100rb'. Catatanmu aman dan terpisah dari pengguna lain!")
 
 @bot.message_handler(func=lambda message: True)
 def proses_chat_user(message):
+    chat_id = message.chat.id
     data = ekstrak_data_keuangan(message.text)
     if data:
         waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        simpan_baris_csv(waktu, data['jenis'], data['kategori'], data['nominal'], data['keterangan'])
+        simpan_baris_csv(chat_id, waktu, data['jenis'], data['kategori'], data['nominal'], data['keterangan'])
         pesan = f"✅ *Berhasil Dicatat!*\nJenis: {data['jenis'].capitalize()}\nKategori: {data['kategori']}\nNominal: Rp {data['nominal']:,}"
-        bot.send_message(message.chat.id, pesan, parse_mode="Markdown")
+        bot.send_message(chat_id, pesan, parse_mode="Markdown")
     else:
         bot.reply_to(message, "❌ Gagal mengenali format uang.")
 
@@ -91,7 +97,11 @@ def jalankan_bot():
 # ================= FLASK ROUTES =================
 @app.route('/')
 def index():
-    df = baca_csv()
+    # Untuk web, kita set default pakai chat_id utama atau global (bisa disesuaikan nanti)
+    chat_id = request.args.get('user', 'default')
+    csv_file = get_csv_file(chat_id)
+    
+    df = baca_csv(chat_id)
     target = baca_target()
 
     if df.empty:
@@ -125,38 +135,45 @@ def index():
 
 @app.route('/tambah_web', methods=['POST'])
 def tambah_web():
+    chat_id = request.args.get('user', 'default')
     teks_input = request.form.get('teks_ai')
     if teks_input:
         data = ekstrak_data_keuangan(teks_input)
         if data:
             waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            simpan_baris_csv(waktu, data['jenis'], data['kategori'], data['nominal'], data['keterangan'])
-    return redirect(url_for('index'))
+            simpan_baris_csv(chat_id, waktu, data['jenis'], data['kategori'], data['nominal'], data['keterangan'])
+    return redirect(url_for('index', user=chat_id))
 
 @app.route('/set_target', methods=['POST'])
 def update_target():
+    chat_id = request.args.get('user', 'default')
     simpan_target(int(request.form['target_nominal']))
-    return redirect(url_for('index'))
+    return redirect(url_for('index', user=chat_id))
 
 @app.route('/hapus/<int:index_id>')
 def hapus_transaksi(index_id):
-    if os.path.exists(CSV_FILE):
-        df = pd.read_csv(CSV_FILE)
+    chat_id = request.args.get('user', 'default')
+    csv_file = get_csv_file(chat_id)
+    if os.path.exists(csv_file):
+        df = pd.read_csv(csv_file)
         if 0 <= index_id < len(df):
             df = df.drop(index_id).reset_index(drop=True)
-            df.to_csv(CSV_FILE, index=False)
-    return redirect(request.referrer or url_for('histori'))
+            df.to_csv(csv_file, index=False)
+    return redirect(url_for('histori', user=chat_id))
 
 @app.route('/export')
 def export_csv():
-    if os.path.exists(CSV_FILE):
-        return send_file(CSV_FILE, as_attachment=True, download_name='laporan_keuangan_finance.csv')
-    return redirect(url_for('index'))
+    chat_id = request.args.get('user', 'default')
+    csv_file = get_csv_file(chat_id)
+    if os.path.exists(csv_file):
+        return send_file(csv_file, as_attachment=True, download_name=f'laporan_keuangan_{chat_id}.csv')
+    return redirect(url_for('index', user=chat_id))
 
 @app.route('/histori')
 def histori():
+    chat_id = request.args.get('user', 'default')
     bulan_filter = request.args.get('bulan', datetime.now().strftime("%Y-%m"))
-    df = baca_csv()
+    df = baca_csv(chat_id)
     if not df.empty:
         df['index_asli'] = df.index
         df_filtered = df[df['Tanggal'].str.startswith(bulan_filter)]
@@ -164,11 +181,9 @@ def histori():
         list_histori = df_filtered.to_dict('records')
     else:
         list_histori = []
-    return render_template('histori.html', transaksi=list_histori, bulan=bulan_filter)
+    return render_template('histori.html', transaksi=list_histori, bulan=bulan_filter, user=chat_id)
 
-
-# ================= JALANKAN BOT DI BACKGROUND THREAD (GLOBAL) =================
-# Supaya ikut terpanggil saat dimuat oleh Gunicorn/Railway
+# Jalankan bot di background thread secara global
 t = threading.Thread(target=jalankan_bot)
 t.daemon = True
 t.start()
