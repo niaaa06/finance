@@ -112,6 +112,52 @@
             </div>
         </div>
 
+        <!-- Form Tambah Transaksi dengan AI -->
+        <div class="card card-custom shadow-sm mb-3">
+            <div class="card-body">
+                <h5 class="card-title mb-3 fw-bold fs-6">✨ Catat Cepat dengan AI</h5>
+                <form action="/tambah_web?user={{ user }}" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Ketik pengeluaran/pemasukan bebas:</label>
+                        <input type="text" name="teks_ai" class="form-control form-control-sm bg-light" placeholder="Contoh: Beli bensin 50rb atau Nabung 500rb" required>
+                        <div class="form-text" style="font-size: 11px;">AI akan otomatis mendeteksi jenis, kategori, dan nominalnya.</div>
+                    </div>
+                    <button type="submit" class="btn btn-brown btn-sm w-100 fw-bold">Simpan dengan AI</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Form Tambah Transaksi Manual (Cadangan saat Token AI Habis) -->
+        <div class="card card-custom shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3 fw-bold fs-6">📝 Catat Manual (Cadangan)</h5>
+                <form action="/tambah_manual?user={{ user }}" method="POST">
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label text-muted small mb-1">Jenis</label>
+                            <select name="jenis" class="form-select form-select-sm bg-light" required>
+                                <option value="pengeluaran">Pengeluaran</option>
+                                <option value="pemasukan">Pemasukan</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small mb-1">Kategori</label>
+                            <input type="text" name="kategori" class="form-control form-control-sm bg-light" placeholder="Cth: Makanan, Transport" required>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label text-muted small mb-1">Nominal (Rp)</label>
+                        <input type="number" name="nominal" class="form-control form-control-sm bg-light" placeholder="Cth: 20000" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small mb-1">Keterangan</label>
+                        <input type="text" name="keterangan" class="form-control form-control-sm bg-light" placeholder="Cth: Nikmatnya es teh">
+                    </div>
+                    <button type="submit" class="btn btn-outline-secondary btn-sm w-100 fw-bold">Simpan Manual</button>
+                </form>
+            </div>
+        </div>
+        
         <!-- Transaksi Terakhir -->
         <div class="d-flex justify-content-between align-items-center mb-2">
             <h6 class="fw-bold mb-0">Transaksi Terakhir</h6>
