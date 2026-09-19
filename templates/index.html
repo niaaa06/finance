@@ -15,14 +15,25 @@
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand navbar-custom shadow-sm mb-4">
+    <!-- Navbar Responsive -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom shadow-sm mb-4">
         <div class="container" style="max-width: 650px;">
-            <a class="navbar-brand text-white fw-bold" href="/">☕ Finance</a>
-            <div class="navbar-nav d-flex flex-row gap-3">
-                <a class="nav-link text-white active" href="/">Dashboard</a>
-                <a class="nav-link text-white-50" href="/histori">Histori</a>
-                <a class="nav-link text-white-50" href="/export">📥 Export CSV</a>
+            <a class="navbar-brand fw-bold" href="/?user={{ user }}">☕ Finance</a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto gap-2 py-2">
+                    <li class="nav-item">
+                        <a class="nav-link text-white active fw-semibold" href="/?user={{ user }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50" href="/histori?user={{ user }}">Histori</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50" href="/export?user={{ user }}">📥 Export CSV</a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
@@ -61,7 +72,7 @@
                 </div>
 
                 <div class="collapse mt-3" id="formTarget">
-                    <form action="/set_target" method="POST" class="input-group input-group-sm">
+                    <form action="/set_target?user={{ user }}" method="POST" class="input-group input-group-sm">
                         <input type="number" name="target_nominal" class="form-control" placeholder="Nominal target baru" required>
                         <button class="btn btn-brown" type="submit">Simpan</button>
                     </form>
@@ -90,7 +101,7 @@
         <div class="card card-custom shadow-sm mb-4">
             <div class="card-body">
                 <h5 class="card-title mb-3 fw-bold fs-6">✨ Catat Cepat dengan AI</h5>
-                <form action="/tambah_web" method="POST">
+                <form action="/tambah_web?user={{ user }}" method="POST">
                     <div class="mb-3">
                         <label class="form-label text-muted small">Ketik pengeluaran/pemasukan bebas:</label>
                         <input type="text" name="teks_ai" class="form-control form-control-sm bg-light" placeholder="Contoh: Beli bensin 50rb atau Nabung 500rb" required>
@@ -100,10 +111,11 @@
                 </form>
             </div>
         </div>
+
         <!-- Transaksi Terakhir -->
         <div class="d-flex justify-content-between align-items-center mb-2">
             <h6 class="fw-bold mb-0">Transaksi Terakhir</h6>
-            <a href="/histori" class="text-decoration-none small text-muted">Lihat Semua &rarr;</a>
+            <a href="/histori?user={{ user }}" class="text-decoration-none small text-muted">Lihat Semua &rarr;</a>
         </div>
 
         <div class="list-group shadow-sm rounded-4 overflow-hidden border">
@@ -117,7 +129,8 @@
                     <span class="badge {{ 'bg-success' if t.Jenis|lower == 'pemasukan' else 'bg-danger' }}">
                         {{ '+' if t.Jenis|lower == 'pemasukan' else '-' }}Rp{{ "{:,.0f}".format(t.Nominal) }}
                     </span>
-                    <a href="/hapus/{{ t.index_asli }}" class="btn btn-outline-danger btn-sm py-0 px-1" title="Hapus" onclick="return confirm('Hapus transaksi ini?')">🗑️</a>
+                    <!-- Tombol hapus dengan parameter from=index agar tetap di halaman utama -->
+                    <a href="{{ url_for('hapus_transaksi', index_id=t.index_asli, user=user, from='index') }}" class="btn btn-outline-danger btn-sm py-0 px-1" title="Hapus" onclick="return confirm('Hapus transaksi ini?')">🗑️</a>
                 </div>
             </div>
             {% else %}
