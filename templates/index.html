@@ -112,21 +112,6 @@
             </div>
         </div>
 
-        <!-- Form Tambah Transaksi dengan AI -->
-        <div class="card card-custom shadow-sm mb-3">
-            <div class="card-body">
-                <h5 class="card-title mb-3 fw-bold fs-6">✨ Catat Cepat dengan AI</h5>
-                <form action="/tambah_web?user={{ user }}" method="POST">
-                    <div class="mb-3">
-                        <label class="form-label text-muted small">Ketik pengeluaran/pemasukan bebas:</label>
-                        <input type="text" name="teks_ai" class="form-control form-control-sm bg-light" placeholder="Contoh: Beli bensin 50rb atau Nabung 500rb" required>
-                        <div class="form-text" style="font-size: 11px;">AI akan otomatis mendeteksi jenis, kategori, dan nominalnya.</div>
-                    </div>
-                    <button type="submit" class="btn btn-brown btn-sm w-100 fw-bold">Simpan dengan AI</button>
-                </form>
-            </div>
-        </div>
-
         <!-- Form Tambah Transaksi Manual (Cadangan saat Token AI Habis) -->
         <div class="card card-custom shadow-sm mb-4">
             <div class="card-body">
