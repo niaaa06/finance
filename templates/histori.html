@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance - Histori Bulanan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #F5EFEB; color: #4A3B32; font-family: sans-serif; }
+        .navbar-custom { background-color: #5C4033; }
+        .card-custom { background-color: #FAF6F0; border: 1px solid #E3D9CD; border-radius: 12px; }
+        .btn-brown { background-color: #5C4033; color: white; }
+        .btn-brown:hover { background-color: #4A3B32; color: white; }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand navbar-custom shadow-sm mb-4">
+        <div class="container" style="max-width: 650px;">
+            <a class="navbar-brand text-white fw-bold" href="/">☕ Finance</a>
+            <div class="navbar-nav d-flex flex-row gap-3">
+                <a class="nav-link text-white-50" href="/">Dashboard</a>
+                <a class="nav-link text-white active" href="/histori">Histori</a>
+                <a class="nav-link text-white-50" href="/export">📥 Export CSV</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5" style="max-width: 650px;">
+        <h4 class="fw-bold mb-3">Histori & Filter Bulanan</h4>
+
+        <!-- Filter Form -->
+        <div class="card card-custom shadow-sm mb-3">
+            <div class="card-body">
+                <form action="/histori" method="GET" class="row g-2 align-items-center">
+                    <div class="col-8">
+                        <input type="month" name="bulan" class="form-control form-control-sm bg-light" value="{{ bulan }}" required>
+                    </div>
+                    <div class="col-4">
+                        <button type="submit" class="btn btn-brown btn-sm w-100 fw-bold">Filter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tabel Histori -->
+        <div class="card card-custom shadow-sm overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead style="background-color: #E3D9CD; color: #4A3B32;">
+                        <tr>
+                            <th class="small">Waktu</th>
+                            <th class="small">Kategori / Ket</th>
+                            <th class="small">Jenis</th>
+                            <th class="small text-end">Nominal</th>
+                            <th class="small text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in transaksi %}
+                        <tr>
+                            <td class="small text-muted" style="font-size: 11px;">{{ t.Tanggal }}</td>
+                            <td>
+                                <div class="fw-bold small">{{ t.Kategori }}</div>
+                                <div class="text-muted" style="font-size: 10px;">{{ t.Keterangan }}</div>
+                            </td>
+                            <td>
+                                <span class="badge {{ 'bg-success' if t.Jenis|lower == 'pemasukan' else 'bg-danger' }}" style="font-size: 10px;">
+                                    {{ t.Jenis.upper() }}
+                                </span>
+                            </td>
+                            <td class="text-end fw-bold small {{ 'text-success' if t.Jenis|lower == 'pemasukan' else 'text-danger' }}">
+                                {{ '+' if t.Jenis|lower == 'pemasukan' else '-' }}Rp{{ "{:,.0f}".format(t.Nominal) }}
+                            </td>
+                            <td class="text-center">
+                                <a href="/hapus/{{ t.index_asli }}" class="btn btn-outline-danger btn-sm py-0 px-1" title="Hapus" onclick="return confirm('Hapus transaksi ini?')">🗑️</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4 small">Tidak ada transaksi di bulan ini.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
